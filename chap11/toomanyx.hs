@@ -22,6 +22,6 @@ newtype AnotherTooMany = AnotherTooMany (Int, String) deriving (Eq, Show, TooMan
 instance (Num a, TooMany a, Ord a) => TooMany (a, a) where
   tooMany (n, m) = (n + m) > 44
 
--- newtype YetAnotherTooMany =
---   (Num a, TooMany a) => YetAnotherTooMany (a, a)
---   deriving (Eq, Show, TooMany)
+newtype YetAnotherTooMany a =
+  YetAnotherTooMany (a, a)
+  deriving (Eq, Show, TooMany)
