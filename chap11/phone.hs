@@ -14,22 +14,22 @@ module Phone where
 import qualified Data.Map.Strict as Map
 import qualified Data.List as List
 import Prelude
-import qualified Data.Char (ord)
+import qualified Data.Char
 
 -- fill in the rest.
 type DaPhone = (Map.Map Digit String)
 
 daPhoneList :: [(Digit, String)]
-daPhoneList = [('1',     ""),
-               ('2',  "ABC"),
-               ('3',  "DEF"),
-               ('4',  "GHI"),
-               ('5',  "JKI"),
-               ('6',  "MNO"),
-               ('7', "PQRS"),
-               ('8',  "TUV"),
-               ('9', "WXYZ"),
-               ('0',   "+ "),
+daPhoneList = [('1',     "1"),
+               ('2',  "ABC2"),
+               ('3',  "DEF3"),
+               ('4',  "GHI4"),
+               ('5',  "JKL5"),
+               ('6',  "MNO6"),
+               ('7', "PQRS7"),
+               ('8',  "TUV8"),
+               ('9', "WXYZ9"),
+               ('0',   "0+ "),
                ('*',   "*^"),
                ('#',  "#.,")]
 
@@ -69,62 +69,69 @@ findPress :: Char -> (Digit, String) -> Maybe (Digit, Presses)
 findPress c (d, s) =
   case a of
     Nothing -> Nothing
-    otherwise -> Just (d, succ x) where Just x = a
+    otherwise -> do
+      let (Just x) = a
+      Just (d, succ x) 
   where a = List.elemIndex c s
 
 
 -- :TODO:
 
-reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
-reverseTaps daPhone c
-  | (o >= 97 && o <= 122) = do
-      let (Just tap) = (foldr (\x y -> (if x == Nothing then (findPress c y) else x)) Nothing daPhoneList)
-      [tap]
+getTap :: Char -> Maybe (Digit, Presses)
+getTap c = foldr (\y x -> (if x == Nothing then (findPress (Data.Char.toUpper c) y) else x)) Nothing daPhoneList
+  where daPhoneList = Map.toList daPhone
+
+
+reverseTaps :: Char -> [(Digit, Presses)]
+reverseTaps c
   | (o >= 65 && o <= 90) = do
-      let (Just tap) = (foldr (\x y -> (if x == Nothing then (findPress (toUpper c) y) else x)) Nothing daPhoneList)
+      let (Just tap) = getTap c
       [('*', 1), tap]
-  where daPhoneList = toList daPhone
-        o = (ord c)
+--  | (o >= 97 && o <= 122) = do
+  | otherwise = do
+      let (Just tap) = getTap c
+      [tap]
+  where daPhoneList = Map.toList daPhone
+        o = (Data.Char.ord c)
 
 
 -- assuming the default phone definition
 -- 'a' -> [('2', 1)]
 -- 'A' -> [('*', 1), ('2', 1)]
 
--- cellPhonesDead :: DaPhone
---   -> String
---   -> [(Digit, Presses)]
--- cellPhonesDead daPhone s =
---   List.concatMap (reverseTaps daPhone)
+cellPhonesDead :: String -> [(Digit, Presses)]
+cellPhonesDead = List.concatMap reverseTaps
 
--- fingerTaps :: [(Digit, Presses)] -> Presses
--- fingerTaps = map (\(d, p) -> tapToChar d p)
 
--- -- What was the most popular letter for each message? What was its
--- -- cost? You’ll want to combine reverseTaps and fingerTaps to figure
--- -- out what it cost in taps. reverseTaps is a list because you need to
--- -- press a different button in order to get capitals.
+-- How many times do digits need to be pressed for each message?
 
--- mostPopularLetter :: String -> Char
--- mostPopularLetter s =
---   foldr (\m (d, p) -> Map.alterF f d m
---                       let f Nothing -> insert d p m
---                           f (Just (dold, pold)) -> update (++ p) d m)
---   Map.empty s
---   where taps = cellPhonesDead daPhone s
+fingerTaps :: [(Digit, Presses)] -> Presses
+fingerTaps = length . (map (\(d, p) -> tapToChar d p))
 
--- -- What was the most popular letter overall?
+-- What was the most popular letter for each message? What was its
+-- cost? You’ll want to combine reverseTaps and fingerTaps to figure
+-- out what it cost in taps. reverseTaps is a list because you need to
+-- press a different button in order to get capitals.
 
--- coolestLtr :: [String] -> Char
--- coolestLtr = mostPopularLetter . concat
+
+mostPopularLetter :: String -> Digit
+mostPopularLetter s =
+  fst maxVEntry
+  where taps = cellPhonesDead s
+        mp = foldr (\(d, p) m -> Map.insertWith (+) d p m) Map.empty taps
+        lst = Map.toList mp
+        maxVEntry = foldr (\y x -> if (snd y) > (snd x) then y else x) (head lst) (tail lst)
+-- What was the most popular letter overall?
+
+coolestLtr :: [String] -> Digit
+coolestLtr = mostPopularLetter . concat
 
 -- -- What was the most popular word?
 
--- coolestWord :: [String] -> String
--- coolestWord strs =
---   foldr (\m wd -> Map.alterF f wd m
---                   let f Nothing -> insert wd 1 m
---                       f _ -> update succ wd m)
---   Map.empty wds
---   where wds = words $ concat strs
-
+coolestWord :: [String] -> String
+coolestWord strs =
+  fst maxVEntry
+  where wds = words $ concat strs
+        freqs = foldr (\wd m -> Map.insertWith (+) wd 1 m) Map.empty wds
+        lst = Map.toList freqs
+        maxVEntry = foldr (\y x -> if (snd y) > (snd x) then y else x) (head lst) (tail lst)
