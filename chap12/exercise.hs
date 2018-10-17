@@ -1,7 +1,6 @@
 module Exercise where
 
-import Data.List (intercalate)
-
+import Data.List
 
 -- example GHCi session above the functions
 -- >>> notThe "the"
@@ -250,7 +249,10 @@ rights (_:xs) = rights xs
 -- iterate is like a very limited unfold that never ends
 
 --  Prelude> :t iterate
---  iterate :: (a -> a) -> a -> [a]
+myIterate :: (a -> a) -> a -> [a]
+
+myIterate f init = init:(myIterate f (f init))
+
 -- because it never ends, we must use
 -- take to get a finite list
 --  Prelude> take 10 $ iterate (+1) 0
@@ -262,61 +264,99 @@ rights (_:xs) = rights xs
 --  Prelude> take 10 $ unfoldr (\b -> Just (b, b+1)) 0
 --  [0,1,2,3,4,5,6,7,8,9]
 
+myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+myUnfoldr f init = case (f init) of
+  Nothing -> []
+  (Just (v, next)) -> v:(myUnfoldr f next)
 
 -- Why bother?
 -- We bother with this for the same reason we abstracted direct recursion into folds, such as with sum, product, and concat.
 
--- import Data.List
--- mehSum :: Num a => [a] -> a mehSum xs = go 0 xs
--- where go :: Num a => a -> [a] -> a go n [] = n
--- go n (x:xs) = (go (n+x) xs) niceSum :: Num a => [a] -> a
--- niceSum = foldl' (+) 0
--- mehProduct :: Num a => [a] -> a mehProduct xs = go 1 xs
--- where go :: Num a => a -> [a] -> a go n [] = n
--- go n (x:xs) = (go (n*x) xs) niceProduct :: Num a => [a] -> a
--- niceProduct = foldl' (*) 1
+mehSum :: Num a => [a] -> a
+mehSum xs = go 0 xs
+  where go :: Num a => a -> [a] -> a
+        go n [] = n
+        go n (x:xs) = (go (n+x) xs)
+
+niceSum :: Num a => [a] -> a
+niceSum = foldl' (+) 0
+
+mehProduct :: Num a => [a] -> a
+mehProduct xs = go 1 xs
+  where go :: Num a => a -> [a] -> a
+        go n [] = n
+        go n (x:xs) = (go (n*x) xs)
+
+niceProduct :: Num a => [a] -> a
+niceProduct = foldl' (*) 1
 -- Remember the redundant structure when we looked at folds?
 
+-- Your eyes may be spouting gouts of blood, but you may also see that
+-- this same principle of abstracting out common patterns and giving
+-- them names applies as well to unfolds as it does to folds.
 
+-- Write your own iterate and unfoldr
 
+-- 1. Write the function myIterate using direct recursion. Compare
+-- the behavior with the built-in iterate to gauge cor- rectness. Do
+-- not look at the source or any examples of iterate so that you are
+-- forced to do this yourself.
 
+-- myIterate :: (a -> a) -> a -> [a]
+-- myIterate = undefined
 
---   Your eyes may be spouting gouts of blood, but you may also see that this same principle of abstracting out common patterns and giving them names applies as well to unfolds as it does to folds.
+-- 2. Write the function myUnfoldr using direct recursion. Compare
+-- with the built-in unfoldr to check your implementation. Again,
+-- don’t look at implementations of unfoldr so that you figure it out
+-- yourself.
 
+-- myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+-- myUnfoldr = undefined
 
+-- 3. Rewrite myIterate into betterIterate using myUnfoldr. A hint —
+-- we used unfoldr to produce the same results as iterate earlier. Do
+-- this with different functions and see if you can abstract the
+-- structure out.
 
--- -- Write your own iterate and unfoldr
--- 1. Write the function myIterate using direct recursion. Com- pare the behavior with the built-in iterate to gauge cor- rectness. Do not look at the source or any examples of iterate so that you are forced to do this yourself.
--- myIterate :: (a -> a) -> a -> [a] myIterate = undefined
--- 2. Write the function myUnfoldr using direct recursion. Com- pare with the built-in unfoldr to check your implementation. Again, don’t look at implementations of unfoldr so
--- that you figure it out yourself.
--- myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a] myUnfoldr = undefined
--- 3. Rewrite myIterate into betterIterate using myUnfoldr. A hint — we used unfoldr to produce the same results as iterate earlier. Do this with different functions and see if you can abstract the structure out.
+-- It helps to have the types in front of you
+-- myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
 
+betterIterate :: (a -> a) -> a -> [a]
+betterIterate f x = myUnfoldr (\x -> Just (x, f x)) x
 
   
---      -- It helps to have the types in front of you
---      -- myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
--- betterIterate :: (a -> a) -> a -> [a] betterIterate f x = myUnfoldr ...?
--- Remember, your betterIterate should have the same re- sults as iterate.
---      Prelude> take 10 $ iterate (+1) 0
---      [0,1,2,3,4,5,6,7,8,9]
---      Prelude> take 10 $ betterIterate (+1) 0
---      [0,1,2,3,4,5,6,7,8,9]
+-- Remember, your betterIterate should have the same results as iterate.
+-- Prelude> take 10 $ iterate (+1) 0
+-- [0,1,2,3,4,5,6,7,8,9]
+-- Prelude> take 10 $ betterIterate (+1) 0
+-- [0,1,2,3,4,5,6,7,8,9]
 
 
+-- Finally something other than a list!
+-- Given the BinaryTree from last chapter, complete the following
+-- exercises. Here’s that datatype again:
 
+data BinaryTree a = Leaf
+                  | Node (BinaryTree a) a (BinaryTree a)
+                  deriving (Eq, Ord, Show)
 
---      Finally something other than a list!
--- Given the BinaryTree from last chapter, complete the following exercises. Here’s that datatype again:
--- data BinaryTree a = Leaf
--- | Node (BinaryTree a) a (BinaryTree a) deriving (Eq, Ord, Show)
 -- 1. Write unfold for BinaryTree.
--- unfold :: (a -> Maybe (a,b,a)) -> a -> BinaryTree b
--- unfold = undefined
+unfold :: (a -> Maybe (a,b,a)) -> a -> BinaryTree b
+unfold f bt = case (f bt) of
+                Nothing -> Leaf
+                (Just (left, node, right)) -> Node (unfold f left) node (unfold f right)
+
+
 -- 2. Make a tree builder.
--- Using the unfold function you’ve just made for BinaryTree, write the following function:
--- treeBuild :: Integer -> BinaryTree Integer treeBuild n = undefined
+-- Using the unfold function you’ve just made for BinaryTree, write
+-- the following function:
+
+treeBuild :: Integer -> BinaryTree Integer
+treeBuild n =
+  unfold f n
+  where f :: Integer -> Maybe (Integer, Integer, Integer)
+        f 0 = Nothing
+        f n = Just ((n - 1), n, (n - 1))
 
 
 
