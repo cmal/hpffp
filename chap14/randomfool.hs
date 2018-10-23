@@ -18,8 +18,9 @@ instance Random Fool where
   --   return (if b then x else y, g)
   randomR _ g = random g
   random g = do
-    b <- getStdRandom $ randomR (True, False)     -- TODO not right
-    return (if b then Frue else Fulse, g)
+    -- b <- getStdRandom $ randomR (True, False)     -- TODO not right
+    -- x <- return $ choose (True, False)
+    -- return (if x then Frue else Fulse, g)
 
 genFool :: Gen Fool
 genFool = choose (Fulse, Frue)
