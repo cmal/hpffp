@@ -1,5 +1,8 @@
 module EitherMonad where
 
+import Test.QuickCheck
+import Test.QuickCheck.Checkers
+import Test.QuickCheck.Classes
 
 type Founded = Int
 type Coders = Int
@@ -73,8 +76,24 @@ instance Applicative (Sum a) where
   -- 3. homomorphism
   -- 4. interchange
 
+instance Monad (Sum a) where
+  return = pure
+  First x >>= _ = First x
+  Second x >>= f = f x
 
--- instance Monad (Sum a) where
---   return = pure
---   (>>=) = undefined
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Sum a b) where
+  arbitrary = do
+    x <- arbitrary
+    y <- arbitrary
+    frequency [(1, return $ First x)
+              ,(1, return $ Second y)]
 
+instance (Eq a, Eq b) => EqProp (Sum a b) where (=-=) = eq
+
+
+main :: IO ()
+main = do
+  let trigger = undefined :: Sum (Int, String, Int) (Int, String, Int)
+  quickBatch $ functor trigger
+  quickBatch $ applicative trigger
+  quickBatch $ monad trigger
