@@ -11,3 +11,8 @@ instance Tofu Frank where
 
 -- > tofu [1] :: Frank Int []
 -- Frank {frankField = [1]}
+
+
+data Barry t k p = Barry { yabba :: p, dabba :: t k }
+data Barry1 t k p = Barry1 { a :: p, b :: t, c :: k }
+-- type inference !!
